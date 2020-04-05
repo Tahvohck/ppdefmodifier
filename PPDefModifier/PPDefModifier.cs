@@ -106,31 +106,7 @@ namespace PPDefModifier
                 foreach (var mod in mods)
                 {
                     ValidateModifier(mod);
-                    if (mod.field != null)
-                    {
-                        ApplyModifier(mod);
-                    }
-                    else
-                    {
-                        // Make a new ModifierDefinition for each modlet in the modlet list and apply it.
-                        foreach ( var modlet in mod.modletlist)
-                        {
-                            if (modlet.field == null || modlet.value == null)
-                            {
-                                // Skip any modlets that are malformed. Do this gracefully so we don't break a sequence.
-                                Debug.LogFormat("PPDefModifer: Modlet patch for {0} was missing a field or a class!", mod.guid ?? mod.cls);
-                                continue;
-                            }
-                            Debug.LogFormat("PPDefModifier: Applying modlet patch to {0}.{1}", mod.guid ?? mod.cls, modlet.field);
-                            ApplyModifier(new ModifierDefinition
-                            {
-                                guid = mod.guid,
-                                cls = mod.cls,
-                                field = modlet.field,
-                                value = modlet.value
-                            });
-                        }
-                    }
+                    ApplyModifier(mod);
                 }
             }
             catch (Exception e)
@@ -170,6 +146,33 @@ namespace PPDefModifier
             System.Object parent = null;
             int parentArrayIndex = -1;
             Type type = null;
+
+            // If modletlist are present then skip to generating new single modifiers, so that these tests
+            // don't get run one more time than needed
+            if (mod.modletlist != null)
+            {
+                // Make a new ModifierDefinition for each modlet in the modlet list and apply it.
+                foreach (ModletStep modlet in mod.modletlist)
+                {
+                    if (modlet.field == null || modlet.value == null)
+                    {
+                        // Skip any modlets that are malformed. Do this gracefully so we don't break a sequence.
+                        //Debug.LogFormat("PPDefModifer: Modlet patch for {0} was missing a field or a class!", mod.guid ?? mod.cls);
+                        continue;
+                    }
+                    //Debug.LogFormat("PPDefModifier: Applying modlet patch to {0}.{1}", mod.guid ?? mod.cls, modlet.field);
+                    ApplyModifier(new ModifierDefinition
+                    {
+                        guid = mod.guid,
+                        cls = mod.cls,
+                        field = modlet.field,
+                        value = modlet.value
+                    });
+                }
+
+                // Once we're done exit from the function.
+                return;
+            }
 
             // Try to find the def if we have a guid
             if (mod.guid != null)
